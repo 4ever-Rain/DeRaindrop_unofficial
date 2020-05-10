@@ -3,14 +3,14 @@
 Reference: https://github.com/rui1996/DeRaindrop
 
 ## Description:
-Project version: 1.0.0
-This project is unofficial pytorch implementation version of training parts. If you have any questions about my code, please contact me.(l.sh@yonsei.ac.kr)
+Fork from https://github.com/shleecs/DeRaindrop_unofficial .
+Try to change the GPUs' problems. 
 
 ## Prerequisites:
 1. Linux
-2. Python 2.7
-3. NVIDIA GPU + CUDA CuDNN (CUDA 8.0)
-4. Pytorch 0.3.1
+2. Python 3.7
+3. NVIDIA GPU + CUDA CuDNN (CUDA 10.0)
+4. Pytorch 1.4.1
 5. TensorboardX
 
 ## Additional implemented parts:
@@ -21,5 +21,4 @@ Training source / loss implementation / dataloader ...
 The whole dataset can be find in author pages(https://github.com/rui1996/DeRaindrop)
 
 ## Results
-<img src="https://github.com/shleecs/DeRaindrop_unofficial/blob/master/results.png" 
-alt="results"/></a>
+
