@@ -25,7 +25,11 @@ class trainer:
 	def __init__(self, opt):
 
 		self.net_D = Discriminator().cuda() 
+		if len(opt.gpu)>1:
+			self.net_D = torch.nn.DataParallel(self.net_D)
 		self.net_G = Generator().cuda()
+		if len(opt.gpu)>1:
+			self.net_G = torch.nn.DataParallel(self.net_G)
 		self.optim1 = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_G.parameters()), lr = opt.lr, betas = (0.5,0.99))
 		self.optim2 = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_D.parameters()), lr = opt.lr, betas = (0.5,0.99))
 		self.start = opt.load
@@ -139,10 +143,19 @@ class trainer:
 				self.optim2.step()
 				
 				if count % 20==0:
+					print('count: '+str(count))
+					print(' loss G: {:.4f}'.format(float(loss_G.item())))
+					print(' loss_D: {:.4f}'.format(float(loss_D.item())))
+					print(' loss_MSE: {:.4f}'.format(MSE_loss.item()))
+					print('loss_PL:{:.4f}'.format(float(loss_PL.item()))+' loss_ML:{:.4f}'.format(float(loss_ML.item()))+' loss_Att:{:.4f}'.format(float(loss_att.item()))+' loss_MAP:{:.4f}'.format(float(loss_MAP.item())))
+					writer.add_scalar('loss_G', float(loss_G.item()), count)
+					writer.add_scalar('loss_D', float(loss_D.item()), count)
+					'''
 					print('count: '+str(count)+' loss G: {:.4f}'.format(float(loss_G.data[0]))+' loss_D: {:.4f}'.format(float(loss_D.data[0]))+' loss_MSE: {:.4f}'.format(MSE_loss.data[0]))
 					print('loss_PL:{:.4f}'.format(float(loss_PL.data[0]))+' loss_ML:{:.4f}'.format(float(loss_ML.data[0]))+' loss_Att:{:.4f}'.format(float(loss_att.data[0]))+' loss_MAP:{:.4f}'.format(float(loss_MAP.data[0])))
 					writer.add_scalar('loss_G', float(loss_G.data[0]), count)
 					writer.add_scalar('loss_D', float(loss_D.data[0]), count)
+					'''
 					
 			step = 0
 			for i, data in enumerate(self.valid_loader):
