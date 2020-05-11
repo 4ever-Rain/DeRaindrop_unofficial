@@ -39,8 +39,8 @@ class trainer:
 		valid_dataset = RainDataset(opt, is_eval=True)
 		train_size = len(train_dataset)
 		valid_size = len(valid_dataset)
-		self.train_loader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
-		self.valid_loader = DataLoader(valid_dataset, batch_size=opt.batch_size)
+		self.train_loader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True,num_workers=8,pin_memory=False)
+		self.valid_loader = DataLoader(valid_dataset, batch_size=opt.batch_size,num_workers=8,pin_memory=False)
 
 		print("# train set : {}".format(train_size))
 		print("# eval set : {}".format(valid_size))
@@ -143,10 +143,11 @@ class trainer:
 				self.optim2.step()
 				
 				if count % 20==0:
+					print('Train Epoch: {} [{}/{} ({:.0f}%)]'.format(
+                    epoch, i * len(data), len(self.train_loader.dataset),
+                    100. * i / len(self.train_loader) ))
 					print('count: '+str(count))
-					print(' loss G: {:.4f}'.format(float(loss_G.item())))
-					print(' loss_D: {:.4f}'.format(float(loss_D.item())))
-					print(' loss_MSE: {:.4f}'.format(MSE_loss.item()))
+					print('loss G: {:.4f}'.format(float(loss_G.item()))+ ' loss_D: {:.4f}'.format(float(loss_D.item()))+' loss_MSE: {:.4f}'.format(MSE_loss.item()))
 					print('loss_PL:{:.4f}'.format(float(loss_PL.item()))+' loss_ML:{:.4f}'.format(float(loss_ML.item()))+' loss_Att:{:.4f}'.format(float(loss_att.item()))+' loss_MAP:{:.4f}'.format(float(loss_MAP.item())))
 					writer.add_scalar('loss_G', float(loss_G.item()), count)
 					writer.add_scalar('loss_D', float(loss_D.item()), count)

@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            //"args": ["--gpu","0,1"],
+            "args": ["--gpu","0,1",
+                "--train_dataset","../dataset/Derain/train/train/",
+                "--eval_dataset","../dataset/Derain/test_a/test_a/",
+                "--test_dataset","../dataset/Derain/test_b/test_b/",
+                "--batch_size","2"],
+            "console": "integratedTerminal"
+        }
+    ]
+}
