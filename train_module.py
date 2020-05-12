@@ -23,15 +23,19 @@ from tensorboardX import SummaryWriter
 
 class trainer:
 	def __init__(self, opt):
-
+		# Create the Discriminator
 		self.net_D = Discriminator().cuda() 
+		# Handle multi-gpu if desired
 		if len(opt.gpu)>1:
 			self.net_D = torch.nn.DataParallel(self.net_D)
+
+		# Create the generator
 		self.net_G = Generator().cuda()
 		if len(opt.gpu)>1:
 			self.net_G = torch.nn.DataParallel(self.net_G)
-		self.optim1 = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_G.parameters()), lr = opt.lr, betas = (0.5,0.99))
-		self.optim2 = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_D.parameters()), lr = opt.lr, betas = (0.5,0.99))
+
+		self.optimizerG = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_G.parameters()), lr = opt.lr, betas = (0.5,0.99))
+		self.optimizerD = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_D.parameters()), lr = opt.lr, betas = (0.5,0.99))
 		self.start = opt.load
 		self.iter = opt.iter
 		self.batch_size = opt.batch_size
@@ -116,7 +120,7 @@ class trainer:
 		return output
 
 	def train_start(self):
-		loss_sum = 0.
+		
 		valid_loss_sum = 0.
 		# I_: input raindrop image
 		# A_: attention map(Mask_list) from ConvLSTM
@@ -124,61 +128,58 @@ class trainer:
 		# O_: output image of the autoencoder
 		# T_: GT
 		writer = SummaryWriter()
-		count = 0
+		interation = 0
 		before_loss = 10000000
-		for epoch in range(self.start, self.iter+1):
+		for ep in range(self.epoch):
 			for i, data in enumerate(self.train_loader):
-				count+=1
+				
 				I_, GT_ = data
 				# print 'GT:',GT_.shape
 				loss_G, loss_D, loss_PL, loss_ML, loss_att, loss_MAP, MSE_loss= self.forward_process(I_,GT_)
 				# print loss_G
 
-				self.optim1.zero_grad()
+				self.optimizerG.zero_grad()
 				loss_G.backward(retain_graph=True)
-				self.optim1.step()
+				self.optimizerG.step()
 
-				self.optim2.zero_grad()
+				self.optimizerD.zero_grad()
 				loss_D.backward()
-				self.optim2.step()
+				self.optimizerD.step()
 				
-				if count % 20==0:
+				if interation % 20==0:
 					print('Train Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                    epoch, i * len(data), len(self.train_loader.dataset),
+                    ep, i * len(data), len(self.train_loader.dataset),
                     100. * i / len(self.train_loader) ))
-					print('count: '+str(count))
+					print('interation: '+str(interation))
 					print('loss G: {:.4f}'.format(float(loss_G.item()))+ ' loss_D: {:.4f}'.format(float(loss_D.item()))+' loss_MSE: {:.4f}'.format(MSE_loss.item()))
 					print('loss_PL:{:.4f}'.format(float(loss_PL.item()))+' loss_ML:{:.4f}'.format(float(loss_ML.item()))+' loss_Att:{:.4f}'.format(float(loss_att.item()))+' loss_MAP:{:.4f}'.format(float(loss_MAP.item())))
-					writer.add_scalar('loss_G', float(loss_G.item()), count)
-					writer.add_scalar('loss_D', float(loss_D.item()), count)
-					'''
-					print('count: '+str(count)+' loss G: {:.4f}'.format(float(loss_G.data[0]))+' loss_D: {:.4f}'.format(float(loss_D.data[0]))+' loss_MSE: {:.4f}'.format(MSE_loss.data[0]))
-					print('loss_PL:{:.4f}'.format(float(loss_PL.data[0]))+' loss_ML:{:.4f}'.format(float(loss_ML.data[0]))+' loss_Att:{:.4f}'.format(float(loss_att.data[0]))+' loss_MAP:{:.4f}'.format(float(loss_MAP.data[0])))
-					writer.add_scalar('loss_G', float(loss_G.data[0]), count)
-					writer.add_scalar('loss_D', float(loss_D.data[0]), count)
-					'''
+					writer.add_scalar('loss_G', float(loss_G.item()), interation)
+					writer.add_scalar('loss_D', float(loss_D.item()), interation)
+			
+			interation+=1
 					
 			step = 0
 			for i, data in enumerate(self.valid_loader):
 				I_, GT_ = data
-				if i == 0:
-					valid_loss_sum = self.forward_process(I_,GT_, is_train=False)
-				else:
-					valid_loss_sum += self.forward_process(I_,GT_, is_train=False)
+				with torch.no_grad():
+					if i == 0:
+						valid_loss_sum = self.forward_process(I_,GT_, is_train=False)
+					else:
+						valid_loss_sum += self.forward_process(I_,GT_, is_train=False)
 				step+=1
 
-			print('epoch_'+str(epoch)+'valid_loss:{} '.format(valid_loss_sum.data[0]/step)+'\n')
-			writer.add_scalar('validation_loss', float(valid_loss_sum.data[0])/step, epoch)
+			print('epoch_'+str(ep)+'valid_loss:{} '.format(valid_loss_sum.data[0]/step)+'\n')
+			writer.add_scalar('validation_loss', float(valid_loss_sum.data[0])/step, ep)
 			valid_loss_sum = float(valid_loss_sum.data[0])/step
 			if before_loss/valid_loss_sum >1.01:
 				before_loss = valid_loss_sum
 				print("save model " + "!"*10)
 				if not os.path.exists(self.out_path):
 					os.system('mkdir -p {}'.format(self.out_path))
-				w_name = 'G_epoch:{}_loss:{}.pth'.format(epoch,valid_loss_sum)
+				w_name = 'G_epoch:{}_loss:{}.pth'.format(ep,valid_loss_sum)
 				save_path = os.path.join(self.out_path,w_name)
 				torch.save(self.net_G.state_dict(), save_path)
-				w_name = 'D_epoch:{}_loss:{}.pth'.format(epoch,valid_loss_sum)
+				w_name = 'D_epoch:{}_loss:{}.pth'.format(ep,valid_loss_sum)
 				save_path = os.path.join(self.out_path,w_name)
 				torch.save(self.net_D.state_dict(), save_path)
 			valid_loss_sum = 0.
