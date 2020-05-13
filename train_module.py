@@ -38,6 +38,7 @@ class trainer:
 		self.optimizerD = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_D.parameters()), lr = opt.lr, betas = (0.5,0.99))
 		self.start = opt.load
 		self.epoch = opt.epoch
+		self.save_epoch_freq = opt.save_epoch_freq
 		self.batch_size = opt.batch_size
 		train_dataset = RainDataset(opt)
 		valid_dataset = RainDataset(opt, is_eval=True)
@@ -129,27 +130,33 @@ class trainer:
 		# T_: GT
 		writer = SummaryWriter()
 		interation = 0
-		before_loss = 10000000
-		for ep in range(self.epoch):
+		#before_loss = 10000000
+		for ep in range(1,self.epoch+1):
 			for i, data in enumerate(self.train_loader):
-				
+				############## Input Data 	######################
 				I_, GT_ = data
 				# print 'GT:',GT_.shape
+
+				############## Forward Pass ######################
 				loss_G, loss_D, loss_PL, loss_ML, loss_att, loss_MAP, MSE_loss= self.forward_process(I_,GT_)
 				# print loss_G
 
+				############## Backward Pass #####################
+				# update generator weights
 				self.optimizerG.zero_grad()
 				loss_G.backward(retain_graph=True)
 				self.optimizerG.step()
 
+				#update discriminator weights
 				self.optimizerD.zero_grad()
 				loss_D.backward()
 				self.optimizerD.step()
 				
+				############## Display results	##################
 				if interation % 20==0:
-					print('Train Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                    ep, i * len(data), len(self.train_loader.dataset),
-                    100. * i / len(self.train_loader) ))
+					#print('Train Epoch: {} [{}/{} ({:.0f}%)]'.format(
+                    #ep, i * len(data), len(self.train_loader.dataset),
+                    #100. * i / len(self.train_loader) ))
 					print('interation: '+str(interation))
 					print('loss G: {:.4f}'.format(float(loss_G.item()))+ ' loss_D: {:.4f}'.format(float(loss_D.item()))+' loss_MSE: {:.4f}'.format(MSE_loss.item()))
 					print('loss_PL:{:.4f}'.format(float(loss_PL.item()))+' loss_ML:{:.4f}'.format(float(loss_ML.item()))+' loss_Att:{:.4f}'.format(float(loss_att.item()))+' loss_MAP:{:.4f}'.format(float(loss_MAP.item())))
@@ -157,7 +164,9 @@ class trainer:
 					writer.add_scalar('loss_D', float(loss_D.item()), interation)
 			
 				interation+=1
-					
+			# end of train epoch	
+
+			############## Validation	##################	
 			step = 0
 			for i, data in enumerate(self.valid_loader):
 				I_, GT_ = data
@@ -167,10 +176,24 @@ class trainer:
 					else:
 						valid_loss_sum += self.forward_process(I_,GT_, is_train=False)
 				step+=1
+			
+			print('epoch_'+str(ep)+'valid_loss:{} '.format(valid_loss_sum.item()/step)+'\n')
+			writer.add_scalar('validation_loss', float(valid_loss_sum.item())/step, ep)
+			valid_loss_sum = float(valid_loss_sum.item())/step
+			# end of val epoch
 
-			print('epoch_'+str(ep)+'valid_loss:{} '.format(valid_loss_sum.data[0]/step)+'\n')
-			writer.add_scalar('validation_loss', float(valid_loss_sum.data[0])/step, ep)
-			valid_loss_sum = float(valid_loss_sum.data[0])/step
+			if ep % self.save_epoch_freq ==0 or ep == self.epoch:
+				print('saving the model at the end of epoch %d' % (ep)) 
+				if not os.path.exists(self.out_path):
+					os.system('mkdir -p {}'.format(self.out_path))
+				w_name = 'G_epoch:{}.pkl'.format(ep)
+				save_path = os.path.join(self.out_path,w_name)
+				torch.save(self.net_G.state_dict(), save_path)
+				w_name = 'D_epoch:{}.pkl'.format(ep)
+				save_path = os.path.join(self.out_path,w_name)
+				torch.save(self.net_D.state_dict(), save_path)
+
+			'''
 			if before_loss/valid_loss_sum >1.01:
 				before_loss = valid_loss_sum
 				print("save model " + "!"*10)
@@ -183,7 +206,7 @@ class trainer:
 				save_path = os.path.join(self.out_path,w_name)
 				torch.save(self.net_D.state_dict(), save_path)
 			valid_loss_sum = 0.
-		
+			'''
 		writer.export_scalars_to_json("./attention_video_restoration.json")
 		writer.close()
 		return
