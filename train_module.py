@@ -37,7 +37,7 @@ class trainer:
 		self.optimizerG = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_G.parameters()), lr = opt.lr, betas = (0.5,0.99))
 		self.optimizerD = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_D.parameters()), lr = opt.lr, betas = (0.5,0.99))
 		self.start = opt.load
-		self.iter = opt.iter
+		self.epoch = opt.epoch
 		self.batch_size = opt.batch_size
 		train_dataset = RainDataset(opt)
 		valid_dataset = RainDataset(opt, is_eval=True)
@@ -156,7 +156,7 @@ class trainer:
 					writer.add_scalar('loss_G', float(loss_G.item()), interation)
 					writer.add_scalar('loss_D', float(loss_D.item()), interation)
 			
-			interation+=1
+				interation+=1
 					
 			step = 0
 			for i, data in enumerate(self.valid_loader):
