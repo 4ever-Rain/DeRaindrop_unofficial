@@ -26,17 +26,17 @@ class trainer:
 		# Create the Discriminator
 		self.net_D = Discriminator().cuda() 
 		# Handle multi-gpu if desired
-		if len(opt.gpu)>1:
-			self.net_D = torch.nn.DataParallel(self.net_D)
+		if len(opt.gpu_ids)>1:
+			self.net_D = torch.nn.DataParallel(self.net_D, device_ids=opt.gpu_ids)
 
 		# Create the generator
 		self.net_G = Generator().cuda()
-		if len(opt.gpu)>1:
-			self.net_G = torch.nn.DataParallel(self.net_G)
+		if len(opt.gpu_ids)>1:
+			self.net_G = torch.nn.DataParallel(self.net_G, device_ids=opt.gpu_ids)
 
 		self.optimizerG = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_G.parameters()), lr = opt.lr, betas = (0.5,0.99))
 		self.optimizerD = torch.optim.Adam(filter(lambda p : p.requires_grad, self.net_D.parameters()), lr = opt.lr, betas = (0.5,0.99))
-		self.start = opt.load
+		#self.start = opt.load
 		self.epoch = opt.epoch
 		self.save_epoch_freq = opt.save_epoch_freq
 		self.batch_size = opt.batch_size

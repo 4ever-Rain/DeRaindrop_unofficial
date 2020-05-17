@@ -1,5 +1,6 @@
-run/
+runs/
 checkpoints/
 weight/
 __pychache__/
 *.pth
+*.pyc
