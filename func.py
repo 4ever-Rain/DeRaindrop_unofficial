@@ -23,8 +23,20 @@ def get_mask(dg_img,img):
 	#avg? max?
 	# mask = np.average(mask, axis=2)
 	mask = np.max(mask, axis=2)
+	mask = morph_process(mask)	#add open function
 	mask = np.expand_dims(mask, axis=2)
+	
 	return mask
+
+def morph_process(image):
+    """
+    图像形态学变化
+    """
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    close_image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+    open_image = cv2.morphologyEx(close_image, cv2.MORPH_OPEN, kernel)
+
+    return open_image
 
 def torch_variable(x, is_train):
 	if is_train:

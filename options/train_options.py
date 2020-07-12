@@ -21,6 +21,11 @@ class TrainOptions():
 		self.parser.add_argument('--save_epoch_freq', type=int, default=10, help='frequency of saving checkpoints at the end of epochs') 
 		self.parser.add_argument('--batch_size', type=int, default=2, help='batch size')
 
+		######add new
+		self.parser.add_argument('--phase', type=str, default='train', help='phase')
+		self.parser.add_argument('--dataroot', type=str, default='/home/yuhan/dataset/Derain2', help='phase')
+		self.parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
+
 	def parse(self):
 		if not self.initialized:
 			self.initialize()

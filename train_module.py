@@ -41,14 +41,14 @@ class trainer:
 		self.save_epoch_freq = opt.save_epoch_freq
 		self.batch_size = opt.batch_size
 		train_dataset = RainDataset(opt)
-		valid_dataset = RainDataset(opt, is_eval=True)
+		#valid_dataset = RainDataset(opt, is_eval=True)
 		train_size = len(train_dataset)
-		valid_size = len(valid_dataset)
+		#valid_size = len(valid_dataset)
 		self.train_loader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True,num_workers=8,pin_memory=False)
-		self.valid_loader = DataLoader(valid_dataset, batch_size=opt.batch_size,num_workers=8,pin_memory=False)
+		#self.valid_loader = DataLoader(valid_dataset, batch_size=opt.batch_size,num_workers=8,pin_memory=False)
 
 		print("# train set : {}".format(train_size))
-		print("# eval set : {}".format(valid_size))
+		#print("# eval set : {}".format(valid_size))
 
 		self.expr_dir = opt.checkpoint_dir
 
