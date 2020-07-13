@@ -9,4 +9,4 @@ from train_module import trainer
 
 opt = TrainOptions().parse()
 tr = trainer(opt)
-tr.train_start()
+tr.train_start(opt)

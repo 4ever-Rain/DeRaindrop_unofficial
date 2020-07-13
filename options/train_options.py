@@ -25,6 +25,7 @@ class TrainOptions():
 		self.parser.add_argument('--phase', type=str, default='train', help='phase')
 		self.parser.add_argument('--dataroot', type=str, default='/home/yuhan/dataset/Derain2', help='phase')
 		self.parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
+		self.parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
 
 	def parse(self):
 		if not self.initialized:

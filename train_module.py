@@ -16,10 +16,14 @@ import argparse
 
 from models import *
 from func import *
-from data.dataset_util import RainDataset
+#from data.dataset_util import RainDataset
 from torch.utils.data import DataLoader
 
 from tensorboardX import SummaryWriter
+
+## new data loader
+from data import create_dataset
+
 
 class trainer:
 	def __init__(self, opt):
@@ -40,14 +44,19 @@ class trainer:
 		self.epoch = opt.epoch
 		self.save_epoch_freq = opt.save_epoch_freq
 		self.batch_size = opt.batch_size
-		train_dataset = RainDataset(opt)
+
+		#add for data part
+		#self.opt = opt
+
+		#train_dataset = RainDataset(opt)
 		#valid_dataset = RainDataset(opt, is_eval=True)
-		train_size = len(train_dataset)
+		
+		#train_size = len(train_dataset)
 		#valid_size = len(valid_dataset)
-		self.train_loader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True,num_workers=8,pin_memory=False)
+		#self.train_loader = DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True,num_workers=8,pin_memory=False)
 		#self.valid_loader = DataLoader(valid_dataset, batch_size=opt.batch_size,num_workers=8,pin_memory=False)
 
-		print("# train set : {}".format(train_size))
+		#print("# train set : {}".format(train_size))
 		#print("# eval set : {}".format(valid_size))
 
 		self.expr_dir = opt.checkpoint_dir
@@ -120,7 +129,12 @@ class trainer:
 
 		return output
 
-	def train_start(self):
+	def train_start(self,opt):
+		#load dataset
+		dataset = create_dataset(opt)
+		dataset_size = len(dataset)
+		print('The number of training images = %d' % dataset_size)
+
 		
 		valid_loss_sum = 0.
 		# I_: input raindrop image
@@ -132,7 +146,7 @@ class trainer:
 		interation = 0
 		#before_loss = 10000000
 		for ep in range(1,self.epoch+1):
-			for i, data in enumerate(self.train_loader):
+			for i, data in enumerate(dataset):
 				############## Input Data 	######################
 				I_, GT_ = data
 				# print 'GT:',GT_.shape
